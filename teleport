@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+TELEPORT_USER=${3:-$USER}
+
+function teleport-send-cmd()
+{
+  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${1#.*}@${1%_stg}.ent.magento.cloud ${2}
+}
+function teleport-download-file()
+{
+  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" scp ${1#.*}@${1%_stg}.ent.magento.cloud:${2} ./ ;
+}
+
+function ssh()
+{
+  teleport-send-cmd $1
+}
+
+function dump()
+{
+  teleport-send-cmd $1 "php bin/magento support:backup:code; php bin/magento support:backup:db"
+  dumpsDirectory="var/support/"
+  dumpFiles=($(teleport-send-cmd $1 "ls -t ${dumpsDirectory} | head -n 2"))
+  for file in "${dumpFiles[@]}"
+  do
+    teleport-download-file $1 "${dumpsDirectory}${file}"
+  done
+}
+
+function help()
+{
+  echo "Usage: $(basename $0) PROJECT_ID [ssh|dump] [Teleport Username]"
+  exit 64;
+}
+
+case "$#" in
+  1) command=ssh
+     ;;
+  2|3) command=$2
+       ;;
+  *) command=help
+     ;;
+esac
+
+${command} "$1"
