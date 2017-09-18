@@ -1,15 +1,15 @@
-# teleport
+# Teleport
 Wrapper around teleport proxy to grab dumps
 
-Usage: teleport PROJECT_ID [ssh|dump] [Teleport Username]
-Examples:
+## Usage
+teleport PROJECT_ID [ssh|dump] [Teleport Username]
 
-Download dumps into current directory
+## Examples:
+ - Download dumps into current directory
 ```
 $ teleport asdfghjkl dump
 ```
-
-Connect by ssh
+- Connect by ssh
 ```
 $ teleport asdfghjkl
 ```
