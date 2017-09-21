@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-TELEPORT_USER=${3:-$USER}
+[ -z "TELEPORT_USER" ] && TELEPORT_USER=${3:-$USER}
 
 function teleport-send-cmd()
 {
