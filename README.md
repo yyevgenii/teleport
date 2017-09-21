@@ -7,11 +7,11 @@ cloud-teleport PROJECT_ID [ssh|dump] [Teleport Username]
 ## Examples:
  - Download dumps into current directory
 ```
-$ cloud-teleport asdfghjkl dump
+$ cloud-teleport projectId dump
 ```
 - Connect by ssh
 ```
-$ cloud-teleport asdfghjkl
+$ cloud-teleport projectId
 ```
 
 
