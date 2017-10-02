@@ -14,4 +14,13 @@ $ cloud-teleport projectId dump
 $ cloud-teleport projectId
 ```
 
+###### If your username differs from cloud account username
+```
+$ export TELEPORT_USER=username
+```
+or 
+```
+$ cloud-teleport projectId dump username
+```
+
 
