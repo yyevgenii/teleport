@@ -1,31 +1,32 @@
 #!/usr/bin/env bash
 
+PROJECT_ID=$1
 [ ! "${TELEPORT_USER}" ] && TELEPORT_USER=${3:-$USER}
 
 function teleport-send-cmd()
 {
-  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${1#.*}@${1%_stg}.ent.magento.cloud ${2}
+  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${PROJECT_ID#.*}@${PROJECT_ID%_stg}.ent.magento.cloud ${1}
 }
 function teleport-download-file()
 {
-  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" scp ${1#.*}@${1%_stg}.ent.magento.cloud:${2} ./ ;
+  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" scp ${PROJECT_ID#.*}@${PROJECT_ID%_stg}.ent.magento.cloud:${1} ./ ;
 }
 
 function ssh()
 {
-  teleport-send-cmd $1
+  teleport-send-cmd
 }
 
 function dump()
 {
   # https://magento2.atlassian.net/browse/MAGECLOUD-1273
-  teleport-send-cmd $1 "php bin/magento support:backup:code; php bin/magento support:backup:db" && {
+  teleport-send-cmd "php bin/magento support:backup:code; php bin/magento support:backup:db" && {
     dumpsDirectory="var/support/"
-    dumpFiles=($(teleport-send-cmd $1 "ls -t ${dumpsDirectory} | head -n 2"))
+    dumpFiles=($(teleport-send-cmd "ls -t ${dumpsDirectory} | head -n 2"))
     for file in "${dumpFiles[@]}"
     do
-      teleport-download-file $1 "${dumpsDirectory}${file}" && echo "${file} was downloaded"
-      teleport-send-cmd $1 "rm ${dumpsDirectory}${file}" && echo "${file} was removed from the remote server"
+      teleport-download-file "${dumpsDirectory}${file}" && echo "${file} was downloaded"
+      teleport-send-cmd "rm ${dumpsDirectory}${file}" && echo "${file} was removed from the remote server"
     done
   }
 }
@@ -45,4 +46,4 @@ case "$#" in
      ;;
 esac
 
-${command} "$1"
+${command}
