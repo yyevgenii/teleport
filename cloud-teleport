@@ -18,7 +18,8 @@ function ssh()
 
 function dump()
 {
-  teleport-send-cmd $1 "php bin/magento support:backup:code && php bin/magento support:backup:db" && {
+  # https://magento2.atlassian.net/browse/MAGECLOUD-1273
+  teleport-send-cmd $1 "php bin/magento support:backup:code; php bin/magento support:backup:db" && {
     dumpsDirectory="var/support/"
     dumpFiles=($(teleport-send-cmd $1 "ls -t ${dumpsDirectory} | head -n 2"))
     for file in "${dumpFiles[@]}"
