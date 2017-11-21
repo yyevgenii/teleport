@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-PROJECT_ID=$1
-[ ! "${TELEPORT_USER}" ] && TELEPORT_USER=${3:-$USER}
-
 function teleport-send-cmd()
 {
   tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${PROJECT_ID#*.}@${PROJECT_ID%_stg}.ent.magento.cloud ${1}
@@ -12,17 +9,17 @@ function teleport-download-file()
   tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" scp ${PROJECT_ID#*.}@${PROJECT_ID%_stg}.ent.magento.cloud:${1} ./ ;
 }
 
-function ssh()
+function teleport-ssh()
 {
-  teleport-send-cmd
+  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${PROJECT_ID#.*}@${TELEPORT_SERVER}${PROJECT_ID%_stg}.ent.magento.cloud
 }
 
-function dump()
+function customdump()
 {
-  # https://magento2.atlassian.net/browse/MAGECLOUD-1273
-  teleport-send-cmd "php bin/magento support:backup:code; php bin/magento support:backup:db" && {
+  echo "Starting ${TYPE} backup..."
+    teleport-send-cmd "php bin/magento support:backup:${TYPE};" && {
     dumpsDirectory="var/support/"
-    dumpFiles=($(teleport-send-cmd "ls -t ${dumpsDirectory} | head -n 2"))
+    dumpFiles=($(teleport-send-cmd "ls -t ${dumpsDirectory} | head -n 1"))
     for file in "${dumpFiles[@]}"
     do
       teleport-download-file "${dumpsDirectory}${file}" && echo "${file} was downloaded"
@@ -31,19 +28,70 @@ function dump()
   }
 }
 
-function help()
+function dump()
 {
-  echo "Usage: $(basename $0) PROJECT_ID [ssh|dump] [Teleport Username]"
-  exit 64;
+  TYPE=code; customdump
+  TYPE=db; customdump
 }
 
-case "$#" in
-  1) command=ssh
-     ;;
-  2|3) command=$2
-       ;;
-  *) command=help
-     ;;
-esac
+function help()
+{
+  echo "Usage: $(basename $0) PROJECT_ID [ssh|dump] [-d|--dump=(code|db)] [-u|--user=(teleport username)] [-s|--server=(1|2|3)]"
+  echo "  PROJECT_ID - required argument, cloud project ID"
+  echo "  -d|--dump code|db - make only a code or db dump"
+  echo "  -u|--user username - if you want to specify different username for cloud, current user by default"
+  echo "  -s|--server 1,2 or 3 - open ssh connection to a specified server"
+}
 
-${command}
+function processoptions()
+{
+  while [[ $# -gt 1 ]]
+  do
+    case "$2" in
+      ssh)
+        TELEPORT_COMMAND=teleport-ssh
+        shift
+      ;;
+      dump)
+        TELEPORT_COMMAND=dump
+        shift
+      ;;
+      -d|--dump)
+        TYPE="$3"
+        TELEPORT_COMMAND=customdump
+        shift
+      ;;
+      -u|--user)
+        TELEPORT_USER="$3"
+        TELEPORT_COMMAND=teleport-ssh
+        shift
+      ;;
+      -s|--server)
+        TELEPORT_COMMAND=teleport-ssh
+        TELEPORT_SERVER="$3."
+        shift
+      ;;
+      esac
+      shift
+    done
+
+if [ ! "${TELEPORT_COMMAND}" ]
+then
+  TELEPORT_COMMAND=teleport-ssh
+fi
+
+if [ ! "${TELEPORT_USER}" ]
+then
+  TELEPORT_USER=${USER}
+fi
+}
+
+if [ $# -ge 1 ]
+then
+  PROJECT_ID=$1
+  processoptions "$@"
+  ${TELEPORT_COMMAND}
+else
+  help
+  exit
+fi

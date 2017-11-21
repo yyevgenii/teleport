@@ -8,7 +8,12 @@ $ tsh version
 ```
 
 ## Usage
-cloud-teleport PROJECT_ID [ssh|dump] [Teleport Username]
+cloud-teleport PROJECT_ID [ssh|dump] [-d|--dump=(code|db)] [-u|--user=(teleport username)] [-s|--server=(1|2|3)]
+ - PROJECT_ID - required argument, cloud project ID
+ - -d|--dump code|db - make only a code or db dump
+ - -u|--user username - if you want to specify different username for cloud, current user by default
+ - -s|--server 1,2 or 3 - open ssh connection to a specified server
+
 
 ## Examples:
  - Download dumps into current directory
@@ -18,6 +23,14 @@ $ cloud-teleport projectId dump
 - Connect by ssh
 ```
 $ cloud-teleport projectId
+```
+- Download only code dump
+```
+$ cloud-teleport projectId -d code
+```
+- Connect by ssh on a second server
+```
+$ cloud-teleport projectId -s 2
 ```
 
 ###### If your username differs from cloud account username
