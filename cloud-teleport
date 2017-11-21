@@ -5,11 +5,11 @@ PROJECT_ID=$1
 
 function teleport-send-cmd()
 {
-  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${PROJECT_ID#.*}@${PROJECT_ID%_stg}.ent.magento.cloud ${1}
+  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${PROJECT_ID#*.}@${PROJECT_ID%_stg}.ent.magento.cloud ${1}
 }
 function teleport-download-file()
 {
-  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" scp ${PROJECT_ID#.*}@${PROJECT_ID%_stg}.ent.magento.cloud:${1} ./ ;
+  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" scp ${PROJECT_ID#*.}@${PROJECT_ID%_stg}.ent.magento.cloud:${1} ./ ;
 }
 
 function ssh()
