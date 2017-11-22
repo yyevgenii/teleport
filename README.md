@@ -24,7 +24,8 @@ curl -o /usr/local/bin/cloud-teleport https://raw.githubusercontent.com/magento-
 ```
 
 ### Usage
-Usage : $(basename "$0") PROJECT_ID [ssh|dump] [-d|--dump=(code|db|scp file_path)] [-u|--user=(teleport username)] [-s|--server=(1|2|3)]
+```
+Usage : cloud-teleport PROJECT_ID [ssh|dump] [-d|--dump=(code|db|scp file_path)] [-u|--user=(teleport username)] [-s|--server=(1|2|3)]
 Options:
  - PROJECT_ID - required argument, cloud project ID
  - ssh - Make SSH connection to remote cloud server
@@ -33,6 +34,7 @@ Options:
  - -d|--dump code|db - make only a code or db dump
  - -u|--user username - if you want to specify different username for cloud, current user by default
  - -s|--server 1,2 or 3 - open ssh connection to a specified server
+```
 
 ### Examples:
 How to download dumps into current directory?
