@@ -39,7 +39,7 @@ $ export TELEPORT_USER=username
 ```
 or 
 ```
-$ cloud-teleport projectId dump username
+$ cloud-teleport projectId -u username
 ```
 
 
