@@ -1,97 +1,96 @@
 #!/usr/bin/env bash
 
-function teleport-send-cmd()
+function teleport_send_cmd()
 {
   tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${PROJECT_ID#*.}@${PROJECT_ID%_stg}.ent.magento.cloud ${1}
 }
-function teleport-download-file()
+function teleport_download_file()
 {
   tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" scp ${PROJECT_ID#*.}@${PROJECT_ID%_stg}.ent.magento.cloud:${1} ./ ;
 }
 
-function teleport-ssh()
+function teleport_ssh()
 {
-  tsh --proxy=leap.magento.cloud:10443 --user="${TELEPORT_USER}" ssh ${PROJECT_ID#.*}@${TELEPORT_SERVER}${PROJECT_ID%_stg}.ent.magento.cloud
+    teleport_send_cmd
 }
 
-function customdump()
+function teleport_scp()
 {
-  echo "Starting ${TYPE} backup..."
-    teleport-send-cmd "php bin/magento support:backup:${TYPE};" && {
+    teleport_download_file $1 && echo "${1} was downloaded";
+}
+
+function dump_by_type()
+{
+    local type=$1
+    echo "Starting ${type} backup..."
+    teleport_send_cmd "php bin/magento support:backup:${type};" && {
     dumpsDirectory="var/support/"
-    dumpFiles=($(teleport-send-cmd "ls -t ${dumpsDirectory} | head -n 1"))
+    dumpFiles=($(teleport_send_cmd "ls -t ${dumpsDirectory} | head -n 1"))
     for file in "${dumpFiles[@]}"
     do
-      teleport-download-file "${dumpsDirectory}${file}" && echo "${file} was downloaded"
-      teleport-send-cmd "rm ${dumpsDirectory}${file}" && echo "${file} was removed from the remote server"
+      teleport_download_file "${dumpsDirectory}${file}" && echo "${file} was downloaded"
+      teleport_send_cmd "rm ${dumpsDirectory}${file}" && echo "${file} was removed from the remote server"
     done
   }
 }
 
 function dump()
 {
-  TYPE=code; customdump
-  TYPE=db; customdump
+  dump_by_type "code"
+  dump_by_type "db"
 }
 
 function help()
 {
-  echo "Usage: $(basename $0) PROJECT_ID [ssh|dump] [-d|--dump=(code|db)] [-u|--user=(teleport username)] [-s|--server=(1|2|3)]"
+  echo "Usage: $(basename $0) PROJECT_ID [ssh|dump|scp path] [-d|--dump=(code|db)] [-u|--user=(teleport username)] [-s|--server=(1|2|3)]"
   echo "  PROJECT_ID - required argument, cloud project ID"
   echo "  -d|--dump code|db - make only a code or db dump"
   echo "  -u|--user username - if you want to specify different username for cloud, current user by default"
   echo "  -s|--server 1,2 or 3 - open ssh connection to a specified server"
+  exit 64
 }
 
 function processoptions()
 {
-  while [[ $# -gt 1 ]]
+  while [[ $# -gt 0 ]]
   do
-    case "$2" in
+    case "$1" in
       ssh)
-        TELEPORT_COMMAND=teleport-ssh
+        TELEPORT_COMMAND="teleport_ssh"
+      ;;
+      scp)
+        TELEPORT_COMMAND="teleport_scp ${2}"
         shift
       ;;
       dump)
-        TELEPORT_COMMAND=dump
-        shift
+        TELEPORT_COMMAND="dump"
       ;;
       -d|--dump)
-        TYPE="$3"
-        TELEPORT_COMMAND=customdump
+        TELEPORT_COMMAND=dump_by_type ${2}
         shift
       ;;
       -u|--user)
-        TELEPORT_USER="$3"
-        TELEPORT_COMMAND=teleport-ssh
+        TELEPORT_USER="$2"
         shift
       ;;
       -s|--server)
-        TELEPORT_COMMAND=teleport-ssh
-        TELEPORT_SERVER="$3."
+        TELEPORT_SERVER="$2."
         shift
       ;;
       esac
       shift
-    done
-
-if [ ! "${TELEPORT_COMMAND}" ]
-then
-  TELEPORT_COMMAND=teleport-ssh
-fi
-
-if [ ! "${TELEPORT_USER}" ]
-then
-  TELEPORT_USER=${USER}
-fi
+  done
 }
 
-if [ $# -ge 1 ]
+TELEPORT_COMMAND=help
+[ ! "${TELEPORT_USER}" ] && TELEPORT_USER=${USER}
+PROJECT_ID=$1
+shift;
+if [ "$PROJECT_ID" ]
 then
-  PROJECT_ID=$1
-  processoptions "$@"
-  ${TELEPORT_COMMAND}
-else
-  help
-  exit
+    TELEPORT_COMMAND=teleport_ssh
 fi
+
+processoptions "$@"
+${TELEPORT_COMMAND}
+exit 0;
