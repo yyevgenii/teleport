@@ -83,6 +83,10 @@ function processoptions()
         TELEPORT_SERVER="$2."
         shift
       ;;
+      -h|--help)
+        TELEPORT_COMMAND="help"
+        shift
+      ;;
       esac
       shift
   done
@@ -90,7 +94,7 @@ function processoptions()
 
 TELEPORT_COMMAND=help
 [ ! "${TELEPORT_USER}" ] && TELEPORT_USER=${USER}
-PROJECT_ID=$1
+[[ $1 != *"-h"* ]] && PROJECT_ID=$1
 shift;
 if [ "$PROJECT_ID" ]
 then
